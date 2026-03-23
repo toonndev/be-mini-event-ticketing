@@ -245,8 +245,11 @@ const options: swaggerJsdoc.Options = {
           description: 'Returns only `published` events by default. If an **admin** Bearer token is provided, returns events of all statuses (draft/published/cancelled).',
           security: [{ bearerAuth: [] }, {}],
           parameters: [
-            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Page number' },
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Page number (1-indexed)' },
             { name: 'limit', in: 'query', schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Items per page' },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Search by event name or description (case-insensitive)' },
+            { name: 'category', in: 'query', schema: { type: 'string', enum: ['concert', 'conference', 'sport', 'workshop', 'festival', 'exhibition', 'other'] }, description: 'Filter by category' },
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['draft', 'published', 'cancelled'] }, description: 'Filter by status — **admin token required**, ignored for public requests' },
           ],
           responses: {
             200: {

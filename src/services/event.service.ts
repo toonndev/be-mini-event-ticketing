@@ -1,15 +1,53 @@
 import { AppDataSource } from '../database/data-source';
 import { Event } from '../entities/Event';
+import { ILike } from 'typeorm';
 
 const eventRepo = () => AppDataSource.getRepository(Event);
 
-export const findAllEvents = (skip: number, take: number, onlyPublished = true) =>
-  eventRepo().findAndCount({
-    where: onlyPublished ? { status: 'published' } : undefined,
+export interface FindAllEventsOptions {
+  skip: number;
+  take: number;
+  onlyPublished?: boolean;
+  search?: string;
+  category?: string;
+  status?: string;
+}
+
+export const findAllEvents = ({ skip, take, onlyPublished = true, search, category, status }: FindAllEventsOptions) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = {};
+
+  if (onlyPublished) {
+    where.status = 'published';
+  } else if (status) {
+    where.status = status;
+  }
+
+  if (category) {
+    where.category = category;
+  }
+
+  if (search) {
+    // search across name and description — run two queries and merge, or use QueryBuilder
+    return eventRepo()
+      .createQueryBuilder('event')
+      .where(onlyPublished ? 'event.status = :pub' : '1=1', { pub: 'published' })
+      .andWhere(status && !onlyPublished ? 'event.status = :status' : '1=1', { status })
+      .andWhere(category ? 'event.category = :category' : '1=1', { category })
+      .andWhere('(event.name ILIKE :search OR event.description ILIKE :search)', { search: `%${search}%` })
+      .orderBy('event.date', 'ASC')
+      .skip(skip)
+      .take(take)
+      .getManyAndCount();
+  }
+
+  return eventRepo().findAndCount({
+    where,
     order: { date: 'ASC' },
     skip,
     take,
   });
+};
 
 export const findEventById = (id: string) =>
   eventRepo().findOne({ where: { id } });

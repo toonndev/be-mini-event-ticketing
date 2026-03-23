@@ -21,7 +21,19 @@ export const getEvents = async (req: AuthRequest, res: Response, next: NextFunct
   try {
     const paging = parsePagination(req);
     const isAdmin = req.userRole === 'admin';
-    const [events, total] = await eventService.findAllEvents(paging.skip, paging.limit, !isAdmin);
+
+    const search = (req.query.search as string | undefined)?.trim() || undefined;
+    const category = (req.query.category as string | undefined)?.trim() || undefined;
+    const status = isAdmin ? ((req.query.status as string | undefined)?.trim() || undefined) : undefined;
+
+    const [events, total] = await eventService.findAllEvents({
+      skip: paging.skip,
+      take: paging.limit,
+      onlyPublished: !isAdmin,
+      search,
+      category,
+      status,
+    });
     const result = events.map((e) => ({ ...e, ticketStatus: computeTicketStatus(e) }));
 
     setContentRange(res, total, paging, result.length);
