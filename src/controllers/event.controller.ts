@@ -3,7 +3,7 @@ import * as eventService from '../services/event.service';
 import { AppError } from '../types';
 import { MSG_MASTER } from '../message/msg-master';
 import { parsePagination, buildPaginationMeta, setContentRange } from '../utils/pagination';
-import { CreateEventDto } from '../dto/event.dto';
+import { CreateEventDto, UpdateEventDto } from '../dto/event.dto';
 import * as sse from '../utils/sse';
 
 const computeStatus = (event: { remainingTickets: number; totalTickets: number }) => {
@@ -38,6 +38,36 @@ export const createEvent = async (req: Request, res: Response, next: NextFunctio
 
     const event = await eventService.createEvent(dto);
     res.status(201).json(event);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateEvent = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const dto = req.body as UpdateEventDto;
+
+    if (dto.date && new Date(dto.date) <= new Date()) {
+      throw new AppError(MSG_MASTER.INVALID_PARAMETERS, 'Event date must be in the future');
+    }
+
+    const event = await eventService.findEventById(req.params.id);
+    if (!event) throw new AppError(MSG_MASTER.NOT_FOUND, 'Event not found');
+
+    const updated = await eventService.updateEvent(event, dto);
+    res.json({ ...updated, status: computeStatus(updated) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteEvent = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const event = await eventService.findEventById(req.params.id);
+    if (!event) throw new AppError(MSG_MASTER.NOT_FOUND, 'Event not found');
+
+    await eventService.deleteEvent(event);
+    res.status(200).json({ message: 'Event deleted' });
   } catch (err) {
     next(err);
   }

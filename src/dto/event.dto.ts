@@ -1,4 +1,4 @@
-import { IsString, IsDateString, IsInt, MinLength, Min } from 'class-validator';
+import { IsString, IsDateString, IsInt, MinLength, Min, IsOptional } from 'class-validator';
 
 export class CreateEventDto {
   @IsString()
@@ -19,4 +19,30 @@ export class CreateEventDto {
   @IsInt()
   @Min(1)
   totalTickets!: number;
+}
+
+export class UpdateEventDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  description?: string;
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  venue?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  totalTickets?: number;
 }

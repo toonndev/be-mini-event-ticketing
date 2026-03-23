@@ -313,6 +313,69 @@ const options: swaggerJsdoc.Options = {
             404: { description: 'Event not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
           },
         },
+        patch: {
+          tags: ['Events'],
+          summary: 'Update an event (admin only)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', example: 'Tech Conference 2026' },
+                    description: { type: 'string', example: 'Updated description' },
+                    date: { type: 'string', format: 'date-time', example: '2026-09-01T10:00:00Z', description: 'Must be a future date' },
+                    venue: { type: 'string', example: 'Bangkok Convention Center' },
+                    totalTickets: { type: 'integer', minimum: 1, example: 300, description: 'Cannot be less than already-booked count' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Event updated successfully',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/Event' } },
+              },
+            },
+            400: { description: 'Validation error or totalTickets below booked count', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            403: { description: 'Forbidden — admin only', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            404: { description: 'Event not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+        delete: {
+          tags: ['Events'],
+          summary: 'Delete an event (admin only)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+          ],
+          responses: {
+            200: {
+              description: 'Event deleted',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      message: { type: 'string', example: 'Event deleted' },
+                    },
+                  },
+                },
+              },
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            403: { description: 'Forbidden — admin only', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            404: { description: 'Event not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
       },
       '/api/admin/users': {
         get: {
