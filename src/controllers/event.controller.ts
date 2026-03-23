@@ -69,9 +69,9 @@ export const updateEvent = async (req: Request<{ id: string }>, res: Response, n
   try {
     const dto = req.body as UpdateEventDto;
 
-    if (dto.date && new Date(dto.date) <= new Date()) {
-      throw new AppError(MSG_MASTER.INVALID_PARAMETERS, 'Event date must be in the future');
-    }
+    // if (dto.date && new Date(dto.date) <= new Date()) {
+    //   throw new AppError(MSG_MASTER.INVALID_PARAMETERS, 'Event date must be in the future');
+    // }
 
     if (dto.endDate && dto.date && new Date(dto.endDate) <= new Date(dto.date)) {
       throw new AppError(MSG_MASTER.INVALID_PARAMETERS, 'End date must be after start date');
