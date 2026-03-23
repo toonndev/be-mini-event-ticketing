@@ -31,6 +31,11 @@ export const getEvents = async (req: Request, res: Response, next: NextFunction)
 export const createEvent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const dto = req.body as CreateEventDto;
+
+    if (new Date(dto.date) <= new Date()) {
+      throw new AppError(MSG_MASTER.INVALID_PARAMETERS, 'Event date must be in the future');
+    }
+
     const event = await eventService.createEvent(dto);
     res.status(201).json(event);
   } catch (err) {
