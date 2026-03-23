@@ -14,7 +14,7 @@ const computeTicketStatus = (remainingTickets: number, totalTickets: number): st
 };
 
 const emitTicketUpdate = (eventId: string, remainingTickets: number, totalTickets: number) => {
-  sse.emit(eventId, { remainingTickets, status: computeTicketStatus(remainingTickets, totalTickets) });
+  sse.emit(eventId, { remainingTickets, ticketStatus: computeTicketStatus(remainingTickets, totalTickets) });
 };
 
 export const createBooking = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -32,8 +32,8 @@ export const createBooking = async (req: AuthRequest, res: Response, next: NextF
 
       const row = await bookingService.sumUserBookings(manager, userId, eventId);
       const used = Number(row?.used ?? 0);
-      if (used + quantity > 5) {
-        throw new AppError(MSG_MASTER.INVALID_PARAMETERS, 'Booking quota exceeded (max 5 per event)');
+      if (used + quantity > event.maxTicketsPerUser) {
+        throw new AppError(MSG_MASTER.INVALID_PARAMETERS, `Booking quota exceeded (max ${event.maxTicketsPerUser} per event)`);
       }
 
       event.remainingTickets -= quantity;

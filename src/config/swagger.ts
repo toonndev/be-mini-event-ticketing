@@ -39,11 +39,18 @@ const options: swaggerJsdoc.Options = {
             name: { type: 'string' },
             description: { type: 'string' },
             date: { type: 'string', format: 'date-time' },
+            endDate: { type: 'string', format: 'date-time', nullable: true },
             venue: { type: 'string' },
+            ticketPrice: { type: 'number', example: 500 },
+            category: { type: 'string', enum: ['concert', 'conference', 'sport', 'workshop', 'festival', 'exhibition', 'other'] },
+            imageUrl: { type: 'string', nullable: true },
             totalTickets: { type: 'integer' },
             remainingTickets: { type: 'integer' },
+            maxTicketsPerUser: { type: 'integer', example: 5 },
+            status: { type: 'string', enum: ['draft', 'published', 'cancelled'] },
+            ticketStatus: { type: 'string', enum: ['available', 'almost_full', 'sold_out'] },
+            tags: { type: 'array', items: { type: 'string' }, nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
-            status: { type: 'string', enum: ['available', 'almost_full', 'sold_out'] },
           },
         },
         PaginatedEvents: {
@@ -211,6 +218,26 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
+      '/api/events/categories': {
+        get: {
+          tags: ['Events'],
+          summary: 'Get all available event categories',
+          responses: {
+            200: {
+              description: 'List of categories',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['concert', 'conference', 'sport', 'workshop', 'festival', 'exhibition', 'other'],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       '/api/events': {
         get: {
           tags: ['Events'],
@@ -244,13 +271,20 @@ const options: swaggerJsdoc.Options = {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['name', 'description', 'date', 'venue', 'totalTickets'],
+                  required: ['name', 'description', 'date', 'venue', 'category', 'totalTickets'],
                   properties: {
                     name: { type: 'string', example: 'Tech Conference 2026' },
                     description: { type: 'string', example: 'Annual tech conference' },
                     date: { type: 'string', format: 'date-time', example: '2026-06-01T10:00:00Z' },
+                    endDate: { type: 'string', format: 'date-time', example: '2026-06-01T18:00:00Z' },
                     venue: { type: 'string', example: 'Bangkok Convention Center' },
+                    ticketPrice: { type: 'number', minimum: 0, example: 500 },
+                    category: { type: 'string', enum: ['concert', 'conference', 'sport', 'workshop', 'festival', 'exhibition', 'other'], example: 'conference' },
+                    imageUrl: { type: 'string', example: 'https://example.com/banner.jpg' },
                     totalTickets: { type: 'integer', minimum: 1, example: 200 },
+                    maxTicketsPerUser: { type: 'integer', minimum: 1, maximum: 20, example: 5 },
+                    status: { type: 'string', enum: ['draft', 'published', 'cancelled'], example: 'published' },
+                    tags: { type: 'array', items: { type: 'string' }, example: ['tech', 'ai'] },
                   },
                 },
               },
@@ -273,7 +307,7 @@ const options: swaggerJsdoc.Options = {
         get: {
           tags: ['Events'],
           summary: 'Live ticket updates via SSE',
-          description: 'Server-Sent Events stream — pushes `{ remainingTickets, status }` every time a booking or cancellation occurs.',
+          description: 'Server-Sent Events stream — pushes `{ remainingTickets, ticketStatus }` every time a booking or cancellation occurs.',
           parameters: [
             { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
           ],
@@ -286,7 +320,7 @@ const options: swaggerJsdoc.Options = {
                     type: 'object',
                     properties: {
                       remainingTickets: { type: 'integer', example: 48 },
-                      status: { type: 'string', enum: ['available', 'almost_full', 'sold_out'] },
+                      ticketStatus: { type: 'string', enum: ['available', 'almost_full', 'sold_out'] },
                     },
                   },
                 },
@@ -330,8 +364,15 @@ const options: swaggerJsdoc.Options = {
                     name: { type: 'string', example: 'Tech Conference 2026' },
                     description: { type: 'string', example: 'Updated description' },
                     date: { type: 'string', format: 'date-time', example: '2026-09-01T10:00:00Z', description: 'Must be a future date' },
+                    endDate: { type: 'string', format: 'date-time', example: '2026-09-01T18:00:00Z' },
                     venue: { type: 'string', example: 'Bangkok Convention Center' },
+                    ticketPrice: { type: 'number', minimum: 0, example: 500 },
+                    category: { type: 'string', enum: ['concert', 'conference', 'sport', 'workshop', 'festival', 'exhibition', 'other'] },
+                    imageUrl: { type: 'string', example: 'https://example.com/banner.jpg' },
                     totalTickets: { type: 'integer', minimum: 1, example: 300, description: 'Cannot be less than already-booked count' },
+                    maxTicketsPerUser: { type: 'integer', minimum: 1, maximum: 20, example: 5 },
+                    status: { type: 'string', enum: ['draft', 'published', 'cancelled'] },
+                    tags: { type: 'array', items: { type: 'string' }, example: ['tech', 'ai'] },
                   },
                 },
               },
@@ -366,6 +407,47 @@ const options: swaggerJsdoc.Options = {
                     type: 'object',
                     properties: {
                       message: { type: 'string', example: 'Event deleted' },
+                    },
+                  },
+                },
+              },
+            },
+            401: { description: 'Unauthorized', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            403: { description: 'Forbidden — admin only', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+            404: { description: 'Event not found', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          },
+        },
+      },
+      '/api/admin/events/{id}/bookings': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Get all bookings for an event (admin only)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'Event ID' },
+          ],
+          responses: {
+            200: {
+              description: 'List of bookings with buyer info',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        bookingId: { type: 'string', format: 'uuid' },
+                        quantity: { type: 'integer' },
+                        bookedAt: { type: 'string', format: 'date-time' },
+                        user: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string', format: 'uuid' },
+                            name: { type: 'string' },
+                            email: { type: 'string', format: 'email' },
+                          },
+                        },
+                      },
                     },
                   },
                 },

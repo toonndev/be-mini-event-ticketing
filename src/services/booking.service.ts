@@ -41,3 +41,10 @@ export const findBookingByIdAndUser = (id: string, userId: string) =>
 
 export const deleteBooking = (manager: EntityManager, booking: Booking) =>
   manager.remove(booking);
+
+export const findBookingsByEvent = (eventId: string) =>
+  AppDataSource.getRepository(Booking).find({
+    where: { event: { id: eventId } },
+    relations: ['user'],
+    order: { bookedAt: 'DESC' },
+  });
