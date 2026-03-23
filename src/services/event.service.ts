@@ -3,8 +3,13 @@ import { Event } from '../entities/Event';
 
 const eventRepo = () => AppDataSource.getRepository(Event);
 
-export const findAllEvents = (skip: number, take: number) =>
-  eventRepo().findAndCount({ where: { status: 'published' }, order: { date: 'ASC' }, skip, take });
+export const findAllEvents = (skip: number, take: number, onlyPublished = true) =>
+  eventRepo().findAndCount({
+    where: onlyPublished ? { status: 'published' } : undefined,
+    order: { date: 'ASC' },
+    skip,
+    take,
+  });
 
 export const findEventById = (id: string) =>
   eventRepo().findOne({ where: { id } });

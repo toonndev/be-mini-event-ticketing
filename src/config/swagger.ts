@@ -242,6 +242,8 @@ const options: swaggerJsdoc.Options = {
         get: {
           tags: ['Events'],
           summary: 'Get all events (paginated)',
+          description: 'Returns only `published` events by default. If an **admin** Bearer token is provided, returns events of all statuses (draft/published/cancelled).',
+          security: [{ bearerAuth: [] }, {}],
           parameters: [
             { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Page number' },
             { name: 'limit', in: 'query', schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Items per page' },

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
 import * as eventService from '../services/event.service';
 import { AppError } from '../types';
 import { MSG_MASTER } from '../message/msg-master';
@@ -16,10 +17,11 @@ export const getCategories = (_req: Request, res: Response) => {
   res.json(EVENT_CATEGORIES);
 };
 
-export const getEvents = async (req: Request, res: Response, next: NextFunction) => {
+export const getEvents = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const paging = parsePagination(req);
-    const [events, total] = await eventService.findAllEvents(paging.skip, paging.limit);
+    const isAdmin = req.userRole === 'admin';
+    const [events, total] = await eventService.findAllEvents(paging.skip, paging.limit, !isAdmin);
     const result = events.map((e) => ({ ...e, ticketStatus: computeTicketStatus(e) }));
 
     setContentRange(res, total, paging, result.length);
