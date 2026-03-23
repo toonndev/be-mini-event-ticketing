@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getEvents, getEventById, getCategories, createEvent, updateEvent, deleteEvent, liveEvent } from '../controllers/event.controller';
+import { getEvents, getEventById, getCategories, createEvent, updateEvent, deleteEvent, liveEvent, liveAllEvents } from '../controllers/event.controller';
 import { authMiddleware, optionalAuth } from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
 import { validateDto } from '../middleware/validate';
@@ -9,6 +9,7 @@ const router = Router();
 
 router.get('/', optionalAuth, getEvents);
 router.get('/categories', getCategories);
+router.get('/live', liveAllEvents);
 router.get('/:id/live', liveEvent);
 router.get('/:id', getEventById);
 router.post('/', authMiddleware, requireRole('admin'), validateDto(CreateEventDto), createEvent);

@@ -99,6 +99,16 @@ export const deleteEvent = async (req: Request<{ id: string }>, res: Response, n
   }
 };
 
+export const liveAllEvents = (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  sse.subscribeGlobal(res);
+  req.on('close', () => sse.unsubscribeGlobal(res));
+};
+
 export const liveEvent = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const event = await eventService.findEventById(req.params.id);

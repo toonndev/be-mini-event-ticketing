@@ -308,11 +308,35 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
+      '/api/events/live': {
+        get: {
+          tags: ['Events'],
+          summary: 'Live ticket updates for all events via SSE (Global)',
+          description: 'Server-Sent Events stream — opens **one connection** and receives updates for **all events**. Pushes `{ eventId, remainingTickets, ticketStatus }` whenever any booking or cancellation occurs. Use this instead of subscribing per-event to reduce connection overhead.',
+          responses: {
+            200: {
+              description: 'SSE stream',
+              content: {
+                'text/event-stream': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      eventId: { type: 'string', format: 'uuid', example: 'e3d2c1b0-...' },
+                      remainingTickets: { type: 'integer', example: 48 },
+                      ticketStatus: { type: 'string', enum: ['available', 'almost_full', 'sold_out'] },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       '/api/events/{id}/live': {
         get: {
           tags: ['Events'],
-          summary: 'Live ticket updates via SSE',
-          description: 'Server-Sent Events stream — pushes `{ remainingTickets, ticketStatus }` every time a booking or cancellation occurs.',
+          summary: 'Live ticket updates for a single event via SSE',
+          description: 'Server-Sent Events stream — pushes `{ remainingTickets, ticketStatus }` every time a booking or cancellation occurs for this specific event. Consider using `GET /api/events/live` (global) when displaying a list of events to reduce connection count.',
           parameters: [
             { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
           ],
