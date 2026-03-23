@@ -12,5 +12,3 @@ export const AppDataSource = new DataSource({
   migrations: ['dist/migrations/*.js'],
 });
 
-console.log("process.env.DATABASE_URL =>", process.env.DATABASE_URL);
-
