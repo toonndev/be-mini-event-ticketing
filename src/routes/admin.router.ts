@@ -6,6 +6,7 @@ import * as bookingService from '../services/booking.service';
 import * as eventService from '../services/event.service';
 import { AppError } from '../types';
 import { MSG_MASTER } from '../message/msg-master';
+import { parsePagination, buildPaginationMeta, setContentRange } from '../utils/pagination';
 
 const router = Router();
 
@@ -13,8 +14,13 @@ router.use(authMiddleware, requireRole('admin'));
 
 router.get('/users', async (req, res, next) => {
   try {
-    const users = await authService.findAllUsers();
-    res.json(users);
+    const paging = parsePagination(req);
+    const [users, total] = await authService.findAllUsers(paging.skip, paging.limit);
+    setContentRange(res, total, paging, users.length);
+    res.json({
+      data: users,
+      pagination: buildPaginationMeta(total, paging),
+    });
   } catch (err) {
     next(err);
   }
@@ -25,7 +31,8 @@ router.get('/events/:id/bookings', async (req, res, next) => {
     const event = await eventService.findEventById(req.params.id);
     if (!event) throw new AppError(MSG_MASTER.NOT_FOUND, 'Event not found');
 
-    const bookings = await bookingService.findBookingsByEvent(req.params.id);
+    const paging = parsePagination(req);
+    const [bookings, total] = await bookingService.findBookingsByEvent(req.params.id, paging.skip, paging.limit);
     const result = bookings.map((b) => ({
       bookingId: b.id,
       quantity: b.quantity,
@@ -36,7 +43,11 @@ router.get('/events/:id/bookings', async (req, res, next) => {
         email: b.user.email,
       },
     }));
-    res.json(result);
+    setContentRange(res, total, paging, result.length);
+    res.json({
+      data: result,
+      pagination: buildPaginationMeta(total, paging),
+    });
   } catch (err) {
     next(err);
   }

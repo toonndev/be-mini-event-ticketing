@@ -454,27 +454,49 @@ const options: swaggerJsdoc.Options = {
           security: [{ bearerAuth: [] }],
           parameters: [
             { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' }, description: 'Event ID' },
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Page number (1-indexed)' },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Items per page' },
           ],
           responses: {
             200: {
-              description: 'List of bookings with buyer info',
+              description: 'Paginated list of bookings with buyer info',
+              headers: {
+                'Content-Range': {
+                  schema: { type: 'string', example: 'items 0-9/50' },
+                  description: 'Range of returned items and total count',
+                },
+              },
               content: {
                 'application/json': {
                   schema: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        bookingId: { type: 'string', format: 'uuid' },
-                        quantity: { type: 'integer' },
-                        bookedAt: { type: 'string', format: 'date-time' },
-                        user: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'array',
+                        items: {
                           type: 'object',
                           properties: {
-                            id: { type: 'string', format: 'uuid' },
-                            name: { type: 'string' },
-                            email: { type: 'string', format: 'email' },
+                            bookingId: { type: 'string', format: 'uuid' },
+                            quantity: { type: 'integer' },
+                            bookedAt: { type: 'string', format: 'date-time' },
+                            user: {
+                              type: 'object',
+                              properties: {
+                                id: { type: 'string', format: 'uuid' },
+                                name: { type: 'string' },
+                                email: { type: 'string', format: 'email' },
+                              },
+                            },
                           },
+                        },
+                      },
+                      pagination: {
+                        type: 'object',
+                        properties: {
+                          total: { type: 'integer', example: 50 },
+                          page: { type: 'integer', example: 1 },
+                          limit: { type: 'integer', example: 10 },
+                          totalPages: { type: 'integer', example: 5 },
                         },
                       },
                     },
@@ -493,12 +515,36 @@ const options: swaggerJsdoc.Options = {
           tags: ['Admin'],
           summary: 'Get all users (admin only)',
           security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Page number (1-indexed)' },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 10, maximum: 100 }, description: 'Items per page' },
+          ],
           responses: {
             200: {
-              description: 'List of all users',
+              description: 'Paginated list of users',
+              headers: {
+                'Content-Range': {
+                  schema: { type: 'string', example: 'items 0-9/50' },
+                  description: 'Range of returned items and total count',
+                },
+              },
               content: {
                 'application/json': {
-                  schema: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+                      pagination: {
+                        type: 'object',
+                        properties: {
+                          total: { type: 'integer', example: 50 },
+                          page: { type: 'integer', example: 1 },
+                          limit: { type: 'integer', example: 10 },
+                          totalPages: { type: 'integer', example: 5 },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },

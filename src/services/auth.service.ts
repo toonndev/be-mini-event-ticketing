@@ -14,21 +14,27 @@ export const findUserById = (id: string) =>
 
 export const createUser = async (data: { name: string; email: string; passwordHash: string }): Promise<User> => {
   const user = await userRepo().save(userRepo().create(data));
-  cache.del('users:list');
+  cache.delByPrefix('users:list:');
   return user;
 };
 
 export const updateUserRole = async (id: string, role: UserRole): Promise<User | null> => {
   await userRepo().update(id, { role });
-  cache.del('users:list');
+  cache.delByPrefix('users:list:');
   return userRepo().findOne({ where: { id } });
 };
 
-export const findAllUsers = async (): Promise<User[]> => {
-  const cached = cache.get<User[]>('users:list');
+export const findAllUsers = async (skip: number, take: number): Promise<[User[], number]> => {
+  const key = `users:list:${skip}:${take}`;
+  const cached = cache.get<[User[], number]>(key);
   if (cached) return cached;
 
-  const users = await userRepo().find({ order: { createdAt: 'DESC' }, select: ['id', 'name', 'email', 'role', 'createdAt'] });
-  cache.set('users:list', users, CACHE_TTL);
-  return users;
+  const result = await userRepo().findAndCount({
+    order: { createdAt: 'DESC' },
+    select: ['id', 'name', 'email', 'role', 'createdAt'],
+    skip,
+    take,
+  });
+  cache.set(key, result, CACHE_TTL);
+  return result;
 };
