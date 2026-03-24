@@ -6,6 +6,7 @@ import { AppError } from '../types';
 import { MSG_MASTER } from '../message/msg-master';
 import { CreateBookingDto } from '../dto/booking.dto';
 import * as sse from '../utils/sse';
+import { cache } from '../utils/cache';
 
 const computeTicketStatus = (remainingTickets: number, totalTickets: number): string => {
   if (remainingTickets === 0) return 'sold_out';
@@ -43,6 +44,7 @@ export const createBooking = async (req: AuthRequest, res: Response, next: NextF
     });
 
     emitTicketUpdate(booking.event.id, booking.event.remainingTickets, booking.event.totalTickets);
+    cache.delByPrefix('events:list:');
 
     res.status(201).json({
       id: booking.id,
@@ -75,6 +77,7 @@ export const cancelBooking = async (req: AuthRequest, res: Response, next: NextF
       await bookingService.deleteBooking(manager, booking);
 
       emitTicketUpdate(event.id, event.remainingTickets, event.totalTickets);
+      cache.delByPrefix('events:list:');
     });
 
     res.status(200).json({ message: 'Booking cancelled', refundedTickets: booking.quantity });
